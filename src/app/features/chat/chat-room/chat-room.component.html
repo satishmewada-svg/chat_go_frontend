@@ -1,0 +1,95 @@
+<div class="chat-room-container">
+
+  <!-- Room Header -->
+  <div class="room-header">
+    <div class="header-left">
+      <button class="btn-back" [routerLink]="['/chat']">
+        <span>←</span>
+      </button>
+
+      <div class="room-info">
+        <h2>{{ room?.name || 'Loading...' }}</h2>
+        @if (room) {
+          <p>{{ room.members.length || 0 }} members</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="messages-container" #messagesContainer>
+
+    @if (loading) {
+      <div class="loading-messages">
+        <div class="spinner"></div>
+        <p>Loading messages...</p>
+      </div>
+    }
+
+    @if (!loading && messages.length === 0) {
+      <div class="empty-messages">
+        <div class="empty-icon">💬</div>
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+    }
+
+    @if (!loading && messages.length > 0) {
+      <div class="messages-list">
+        @for (message of messages; track message.ID; let i = $index) {
+
+          @if (shouldShowDateSeparator(i)) {
+            <div class="date-separator">
+              <span>{{ formatMessageDate(message.CreatedAt) }}</span>
+            </div>
+          }
+
+          <div
+            class="message-wrapper"
+            [class.own-message]="isOwnMessage(message)"
+            [class.other-message]="!isOwnMessage(message)"
+          >
+            <div class="message-bubble">
+
+              @if (!isOwnMessage(message)) {
+                <div class="message-header">
+                  <span class="sender-name">{{ message.sender?.name }}</span>
+                </div>
+              }
+
+              <div class="message-content">{{ message.content }}</div>
+              <div class="message-time">{{ formatMessageTime(message.CreatedAt) }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Message Input -->
+  <div class="message-input-container">
+    <div class="message-input-wrapper">
+      <textarea
+        [(ngModel)]="messageContent"
+        (keypress)="onKeyPress($event)"
+        placeholder="Type a message..."
+        class="message-input"
+        rows="1"
+        [disabled]="sending"
+      ></textarea>
+
+      <button
+        class="btn-send"
+        (click)="sendMessage()"
+        [disabled]="!messageContent.trim() || sending"
+      >
+        @if (!sending) {
+          <span>Send</span>
+        }
+        @if (sending) {
+          <span class="spinner-small"></span>
+        }
+      </button>
+    </div>
+  </div>
+
+</div>

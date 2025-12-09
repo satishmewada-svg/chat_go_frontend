@@ -1,0 +1,103 @@
+<div class="chat-list-container">
+  <div class="chat-list-header">
+    <h2>Messages</h2>
+    <div class="header-actions">
+      <!-- NEW: Direct Chat Button -->
+      <button class="btn-icon" (click)="openUserListModal()" title="New Direct Chat">
+        <span class="icon">👤</span>
+      </button>
+      <!-- Group Chat Button -->
+      <button class="btn-create" (click)="openCreateModal()">
+        <span class="icon">+</span> New Group
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading chats...</p>
+    </div>
+  }
+
+  @if (!loading && errorMessage) {
+    <div class="alert alert-danger">
+      {{ errorMessage }}
+    </div>
+  }
+
+  @if (!loading && rooms.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <h3>No chats yet</h3>
+      <p>Start a conversation</p>
+      <div class="empty-actions">
+        <button class="btn btn-secondary" (click)="openUserListModal()">
+          Direct Chat
+        </button>
+        <button class="btn btn-primary" (click)="openCreateModal()">
+          Create Group
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (!loading && rooms.length > 0) {
+    <div class="rooms-list">
+      @for (room of rooms; track room.ID) {
+        <div class="room-item" (click)="openRoom(room.ID)">
+          <div class="room-avatar">
+            <span>{{ getRoomAvatar(room) }}</span>
+            @if (!room.is_group) {
+              <div class="direct-badge">👤</div>
+            }
+          </div>
+          <div class="room-info">
+            <div class="room-header">
+              <h3 class="room-name">
+                {{ getRoomDisplayName(room) }}
+                @if (room.is_group) {
+                  <span class="group-badge">Group</span>
+                }
+              </h3>
+              <span class="room-time">{{ getLastMessageTime(room) }}</span>
+            </div>
+            <p class="room-description">
+              @if (room.is_group) {
+                {{ room.description || 'No description' }}
+              } @else {
+                Direct message
+              }
+            </p>
+            @if (room.is_group) {
+              <span class="members-count">{{ room.members.length || 0 }} members</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Group Chat Modal -->
+@if (showCreateModal) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <app-create-room 
+        (roomCreated)="onRoomCreated()"
+        (cancelled)="closeCreateModal()"
+      ></app-create-room>
+    </div>
+  </div>
+}
+
+<!-- Direct Chat Modal -->
+@if (showUserListModal) {
+  <div class="modal-overlay" (click)="closeUserListModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <app-user-list
+        (cancelled)="closeUserListModal()"
+      ></app-user-list>
+    </div>
+  </div>
+}

@@ -1,0 +1,117 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <h2>Create Account</h2>
+      <p>Sign up to get started with Chat App</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-control"
+          [class.is-invalid]="submitted && f['username'].errors"
+          placeholder="Choose a username"
+        />
+        @if (submitted && f['username'].errors) {
+          <div class="invalid-feedback">
+            @if (f['username'].errors['required']) {
+              <div>Username is required</div>
+            }
+            @if (f['username'].errors['minlength']) {
+              <div>Username must be at least 3 characters</div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [class.is-invalid]="submitted && f['email'].errors"
+          placeholder="Enter your email"
+        />
+        @if (submitted && f['email'].errors) {
+          <div class="invalid-feedback">
+            @if (f['email'].errors['required']) {
+              <div>Email is required</div>
+            }
+            @if (f['email'].errors['email']) {
+              <div>Email must be valid</div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [class.is-invalid]="submitted && f['password'].errors"
+          placeholder="Create a password"
+        />
+        @if (submitted && f['password'].errors) {
+          <div class="invalid-feedback">
+            @if (f['password'].errors['required']) {
+              <div>Password is required</div>
+            }
+            @if (f['password'].errors['minlength']) {
+              <div>Password must be at least 6 characters</div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          class="form-control"
+          [class.is-invalid]="submitted && f['confirmPassword'].errors"
+          placeholder="Confirm your password"
+        />
+        @if (submitted && f['confirmPassword'].errors) {
+          <div class="invalid-feedback">
+            @if (f['confirmPassword'].errors['required']) {
+              <div>Please confirm your password</div>
+            }
+            @if (f['confirmPassword'].errors['passwordMismatch']) {
+              <div>Passwords do not match</div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-danger">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="loading">
+        @if (loading) {
+          <span class="spinner"></span>
+        }
+        @if (!loading) {
+          <span>Create Account</span>
+        }
+      </button>
+    </form>
+
+    <div class="register-footer">
+      <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+    </div>
+  </div>
+</div>

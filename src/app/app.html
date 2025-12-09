@@ -1,0 +1,19 @@
+<div class="app-container">
+  @if (isAuthenticated) {
+    <nav class="navbar">
+      <div class="navbar-content">
+        <div class="navbar-brand">
+          <h1>💬 Chat App</h1>
+        </div>
+        <div class="navbar-menu">
+          <span class="user-name">{{ currentUser?.username }}</span>
+          <button class="btn-logout" (click)="logout()">Logout</button>
+        </div>
+      </div>
+    </nav>
+  }
+  
+  <main class="main-content" [class.with-navbar]="isAuthenticated">
+    <router-outlet></router-outlet>
+  </main>
+</div>

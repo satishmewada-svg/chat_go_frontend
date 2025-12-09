@@ -1,0 +1,64 @@
+<div class="user-list-container">
+  <div class="user-list-header">
+    <h2>Start Direct Chat</h2>
+    <button class="btn-close" (click)="onCancel()">&times;</button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <input
+      type="text"
+      class="search-input"
+      [(ngModel)]="searchQuery"
+      (input)="onSearchInput($event)"
+      placeholder="Search users..."
+    />
+  </div>
+
+  @if (errorMessage) {
+    <div class="alert alert-danger">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading users...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading && filteredUsers.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3>No users found</h3>
+      <p>Try adjusting your search</p>
+    </div>
+  }
+
+  <!-- User List -->
+  @if (!loading && filteredUsers.length > 0) {
+    <div class="users-list">
+      @for (user of filteredUsers; track user.ID) {
+        <div 
+          class="user-item" 
+          (click)="createDirectChat(user.ID)"
+          [class.disabled]="creating"
+        >
+          <div class="user-avatar">
+            {{ user.name.charAt(0).toUpperCase() }}
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ user.name }}</div>
+            <div class="user-email">{{ user.email }}</div>
+          </div>
+          <div class="user-action">
+            <span class="action-icon">→</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

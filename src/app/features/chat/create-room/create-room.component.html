@@ -1,0 +1,125 @@
+<div class="create-room-container">
+  <div class="create-room-header">
+    <h2>Create New Group Chat</h2>
+    <button class="btn-close" (click)="onCancel()">&times;</button>
+  </div>
+
+  <form [formGroup]="createRoomForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="name">Group Name *</label>
+      <input
+        type="text"
+        id="name"
+        formControlName="name"
+        class="form-control"
+        [class.is-invalid]="f['name'].invalid && f['name'].touched"
+        placeholder="Enter group name"
+      />
+      @if (f['name'].invalid && f['name'].touched) {
+        <div class="invalid-feedback">
+          @if (f['name'].errors?.['required']) {
+            <div>Group name is required</div>
+          }
+          @if (f['name'].errors?.['minlength']) {
+            <div>Group name must be at least 3 characters</div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        class="form-control"
+        rows="3"
+        placeholder="Add a description (optional)"
+      ></textarea>
+    </div>
+
+    <!-- NEW: Member selection -->
+    <div class="form-group">
+      <label for="members">Add Members</label>
+      
+      <!-- Selected Members -->
+      @if (selectedMembers.length > 0) {
+        <div class="selected-members">
+          @for (member of selectedMembers; track member.ID) {
+            <div class="member-chip">
+              <span class="member-name">{{ member.name }}</span>
+              <button 
+                type="button" 
+                class="btn-remove-member"
+                (click)="removeMember(member.ID)"
+              >×</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Search Input -->
+      <div class="search-wrapper">
+        <input
+          type="text"
+          id="members"
+          class="form-control"
+          [(ngModel)]="searchQuery"
+          [ngModelOptions]="{standalone: true}"
+          (input)="onSearchInput($event)"
+          placeholder="Search users to add..."
+        />
+        
+        <!-- Search Results Dropdown -->
+        @if (showSearchResults) {
+          <div class="search-results">
+            @if (searching) {
+              <div class="search-loading">
+                <span class="spinner-small"></span>
+                <span>Searching...</span>
+              </div>
+            }
+            
+            @if (!searching && searchResults.length === 0 && searchQuery.trim()) {
+              <div class="no-results">No users found</div>
+            }
+            
+            @if (!searching && searchResults.length > 0) {
+              @for (user of searchResults; track user.ID) {
+                <div class="search-result-item" (click)="addMember(user)">
+                  <div class="user-avatar">
+                    {{ user.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="user-info">
+                    <div class="user-name">{{ user.name }}</div>
+                    <div class="user-email">{{ user.email }}</div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading || createRoomForm.invalid">
+        @if (loading) {
+          <span class="spinner"></span>
+        }
+        @if (!loading) {
+          <span>Create Group</span>
+        }
+      </button>
+    </div>
+  </form>
+</div>
