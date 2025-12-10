@@ -384,34 +384,6 @@
   font-size: 12px;
   color: #999;
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Scrollbar styles
-.rooms-list {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 3px;
-
-    &:hover {
-      background-color: #9ca3af;
-    }
-  }
-}
-/* ============================== */
-/* MODAL OVERLAY */
-/* ============================== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -426,9 +398,6 @@
   backdrop-filter: blur(2px);
 }
 
-/* ============================== */
-/* MODAL WRAPPER */
-/* ============================== */
 .modal-content {
   background: #ffffff;
   width: 95%;
@@ -442,9 +411,6 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
 }
 
-/* ============================== */
-/* USER LIST CONTAINER */
-/* ============================== */
 .user-list-container {
   display: flex;
   flex-direction: column;
@@ -482,9 +448,6 @@
   }
 }
 
-/* ============================== */
-/* LOADING USERS */
-/* ============================== */
 .loading-users {
   padding: 40px 0;
   text-align: center;
@@ -506,9 +469,6 @@
   }
 }
 
-/* ============================== */
-/* EMPTY USERS */
-/* ============================== */
 .empty-users {
   padding: 40px 0;
   text-align: center;
@@ -516,9 +476,6 @@
   font-size: 15px;
 }
 
-/* ============================== */
-/* USERS LIST SCROLL AREA */
-/* ============================== */
 .users-list {
   flex: 1;
   overflow-y: auto;
@@ -534,9 +491,6 @@
   }
 }
 
-/* ============================== */
-/* INDIVIDUAL USER ITEM */
-/* ============================== */
 .user-item {
   display: flex;
   align-items: center;
@@ -556,9 +510,6 @@
   }
 }
 
-/* ============================== */
-/* AVATAR */
-/* ============================== */
 .user-avatar-wrapper {
   position: relative;
 
@@ -594,9 +545,6 @@
   }
 }
 
-/* ============================== */
-/* USER INFO */
-/* ============================== */
 .user-info {
   flex: 1;
 
@@ -627,9 +575,6 @@
   }
 }
 
-/* ============================== */
-/* ANIMATIONS */
-/* ============================== */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -646,3 +591,30 @@
     opacity: 1;
   }
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Scrollbar styles
+.rooms-list {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+
+    &:hover {
+      background-color: #9ca3af;
+    }
+  }
+}
+
