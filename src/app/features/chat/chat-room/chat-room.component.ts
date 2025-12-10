@@ -131,9 +131,17 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   connectWebSocket(): void {
     this.wsSubscription = this.wsService.connect(this.roomId).subscribe({
       next: (wsMessage: WebSocketMessage) => {
+        console.log('Received WebSocket message:', wsMessage);
         if (wsMessage.type === 'message' && wsMessage.message) {
-          this.messages.push(wsMessage.message as Message);
+          const newMessage = wsMessage.message as Message;
+          
+          // Remove temporary message (ID === 0) from the same sender with same content
+          this.messages = this.messages.filter(m => !(m.ID === 0 && m.sender_id === newMessage.sender_id && m.content === newMessage.content));
+          
+          // Add the real message
+          this.messages.push(newMessage);
           setTimeout(() => this.scrollToBottom(), 100);
+          this.cdr.detectChanges();
         }
       },
       error: (error) => {

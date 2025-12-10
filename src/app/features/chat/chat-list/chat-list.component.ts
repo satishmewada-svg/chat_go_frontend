@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 import { ChatRoom, User } from '../../../core/models/user.models';
 import { ChatService } from '../../../core/services/chat';
@@ -12,7 +13,8 @@ import { CreateRoomComponent } from "../create-room/create-room.component";
   selector: 'app-chat-list',
   templateUrl: './chat-list.component.html',
   styleUrls: ['./chat-list.component.scss'],
-  imports: [CreateRoomComponent]
+  standalone: true,
+  imports: [CommonModule, CreateRoomComponent]
 })
 export class ChatListComponent implements OnInit, OnDestroy {
   rooms: ChatRoom[] = [];
