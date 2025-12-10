@@ -52,10 +52,13 @@ export interface SendMessageRequest {
 
 export interface WebSocketMessage {
   type: string;
-    content?: string;
+  content?: string;
   room_id?: number;
   message?: Message;
   error?: string;
+  userId?: number; // NEW: user who is typing
+  username?: string; // NEW: username of typing user
+  typing?: boolean; // NEW: is user typing
 }
 
 // NEW: Interface for direct chat creation

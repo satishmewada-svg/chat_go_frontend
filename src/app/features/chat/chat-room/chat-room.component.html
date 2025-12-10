@@ -67,10 +67,17 @@
 
   <!-- Message Input -->
   <div class="message-input-container">
+    <!-- NEW: Typing indicator -->
+    @if (getTypingUsersText()) {
+      <div class="typing-indicator">
+        {{ getTypingUsersText() }}
+      </div>
+    }
     <div class="message-input-wrapper">
       <textarea
         [(ngModel)]="messageContent"
         (keypress)="onKeyPress($event)"
+        (input)="onMessageInput()"
         placeholder="Type a message..."
         class="message-input"
         rows="1"

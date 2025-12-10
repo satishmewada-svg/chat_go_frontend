@@ -27,10 +27,15 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   roomId!: number;
   room: ChatRoom | null = null;
   messages: Message[] = [];
-  messageContent= '';
+  messageContent = '';
   loading = false;
   sending = false;
   currentUserId: number;
+  
+  // NEW: Typing indicator
+  typingUsers: Set<number> = new Set();
+  typingTimeout: any;
+  isTyping = false;
   
   private wsSubscription?: Subscription;
   private statusCheckSubscription?: Subscription;
@@ -140,7 +145,17 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
           
           // Add the real message
           this.messages.push(newMessage);
+          this.cdr.detectChanges();
           setTimeout(() => this.scrollToBottom(), 100);
+          
+        }
+        // Handle typing indicators
+        else if (wsMessage.type === 'typing' && wsMessage.userId) {
+          if (wsMessage.typing) {
+            this.typingUsers.add(wsMessage.userId);
+          } else {
+            this.typingUsers.delete(wsMessage.userId);
+          }
           this.cdr.detectChanges();
         }
       },
@@ -148,6 +163,51 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
         console.error('WebSocket error:', error);
       }
     });
+  }
+
+  // NEW: Send typing indicator
+  onMessageInput(): void {
+    if (!this.isTyping) {
+      this.isTyping = true;
+      this.wsService.sendMessage({
+        type: 'typing',
+        typing: true
+      });
+    }
+
+    // Clear existing timeout
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+
+    // Set timeout to stop typing after 1 second of inactivity
+    this.typingTimeout = setTimeout(() => {
+      this.isTyping = false;
+      this.wsService.sendMessage({
+        type: 'typing',
+        typing: false
+      });
+    }, 1000);
+  }
+
+  // NEW: Get typing users display (exclude current user)
+  getTypingUsersText(): string {
+    if (this.typingUsers.size === 0) return '';
+    
+    const typingUsersList = Array.from(this.typingUsers)
+      .filter(userId => userId !== this.currentUserId)  // Exclude self
+      .map(userId => {
+        const user = this.room?.members.find(m => m.ID === userId);
+        return user?.name || 'User';
+      });
+
+    if (typingUsersList.length === 0) return '';  // No other users typing
+    
+    if (typingUsersList.length === 1) {
+      return `${typingUsersList[0]} is typing...`;
+    } else {
+      return `${typingUsersList.join(', ')} are typing...`;
+    }
   }
 
 sendMessage(): void {
