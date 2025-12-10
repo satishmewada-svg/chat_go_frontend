@@ -65,6 +65,11 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
+    &:disabled {
+      background-color: #f9fafb;
+      cursor: not-allowed;
+    }
+
     &::placeholder {
       color: #9ca3af;
     }
@@ -129,11 +134,16 @@
   .user-item {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 14px 16px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+
+    &:last-child {
+      border-bottom: none;
+    }
 
     &:hover:not(.disabled) {
       background-color: #f9fafb;
@@ -144,35 +154,56 @@
       cursor: not-allowed;
     }
 
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 600;
+    .user-avatar-wrapper {
+      position: relative;
       flex-shrink: 0;
+
+      .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .status-dot {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #9ca3af;
+        border: 2px solid white;
+        
+        &.online {
+          background-color: #10b981;
+        }
+      }
     }
 
     .user-info {
       flex: 1;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
 
       .user-name {
         font-weight: 500;
         color: #1f2937;
         font-size: 15px;
-        margin-bottom: 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
 
-      .user-email {
+      .user-status {
         font-size: 13px;
         color: #6b7280;
         white-space: nowrap;
@@ -183,17 +214,20 @@
 
     .user-action {
       flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-      .action-icon {
-        font-size: 20px;
-        color: #9ca3af;
-        transition: all 0.2s;
+      .action-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #e5e7eb;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
       }
-    }
-
-    &:hover:not(.disabled) .action-icon {
-      color: #3b82f6;
-      transform: translateX(4px);
     }
   }
 }

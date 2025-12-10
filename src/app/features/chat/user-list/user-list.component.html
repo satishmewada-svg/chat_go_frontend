@@ -1,6 +1,7 @@
+<!-- src/app/features/chat/user-list/user-list.component.html -->
 <div class="user-list-container">
   <div class="user-list-header">
-    <h2>Start Direct Chat</h2>
+    <h2>Start a Conversation</h2>
     <button class="btn-close" (click)="onCancel()">&times;</button>
   </div>
 
@@ -11,12 +12,13 @@
       class="search-input"
       [(ngModel)]="searchQuery"
       (input)="onSearchInput($event)"
-      placeholder="Search users..."
+      placeholder="Search by name or email..."
+      [disabled]="creating"
     />
   </div>
 
   @if (errorMessage) {
-    <div class="alert alert-danger">
+    <div class="alert-danger">
       {{ errorMessage }}
     </div>
   }
@@ -34,7 +36,11 @@
     <div class="empty-state">
       <div class="empty-icon">👥</div>
       <h3>No users found</h3>
-      <p>Try adjusting your search</p>
+      @if (searchQuery) {
+        <p>Try adjusting your search</p>
+      } @else {
+        <p>No other users available</p>
+      }
     </div>
   }
 
@@ -47,15 +53,19 @@
           (click)="createDirectChat(user.ID)"
           [class.disabled]="creating"
         >
-          <div class="user-avatar">
-            {{ user.name.charAt(0).toUpperCase() }}
+          <div class="user-avatar-wrapper">
+            <div class="user-avatar">
+              {{ (user.username || user.email).charAt(0).toUpperCase() }}
+            </div>
           </div>
           <div class="user-info">
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-email">{{ user.email }}</div>
+            <div class="user-name">{{ user.username }}</div>
+           
           </div>
           <div class="user-action">
-            <span class="action-icon">→</span>
+            @if (creating) {
+              <span class="action-spinner"></span>
+            }
           </div>
         </div>
       }

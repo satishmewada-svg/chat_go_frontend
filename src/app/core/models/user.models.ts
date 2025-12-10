@@ -2,12 +2,14 @@
 
 export interface User {
   ID: number;
+  username?: string;
   name: string;
   email: string;
-  CreatedAt: string;
-  UpdatedAt: string;
+  is_online?: boolean;        // NEW
+  last_seen_at?: string;      // NEW
+  CreatedAt?: string;
+  UpdatedAt?: string;
 }
-
 export interface AuthResponse {
   message: string;
   token: string;
@@ -30,7 +32,7 @@ export interface Message {
   ID: number;
   room_id: number;
   sender_id: number;
-  sender: User | null;
+  sender?: User | null;
   content: string;
   is_read: boolean;
   CreatedAt: string;

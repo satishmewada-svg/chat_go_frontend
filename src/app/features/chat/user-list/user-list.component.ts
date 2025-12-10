@@ -2,16 +2,18 @@
 import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatService } from '../../../core/services/chat';
+
 import { User } from '../../../core/models/user.models';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { ChatService } from '../../../core/services/chat';
 
 @Component({
   selector: 'app-user-list',
+  standalone: true, // Keep standalone
+  imports: [CommonModule, FormsModule],
   templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.scss'],
-  imports: [CommonModule, FormsModule]
+  styleUrls: ['./user-list.component.scss']
 })
 export class UserListComponent implements OnInit {
   @Output() cancelled = new EventEmitter<void>();
@@ -73,14 +75,17 @@ export class UserListComponent implements OnInit {
     } else {
       const lowerQuery = query.toLowerCase();
       this.filteredUsers = this.users.filter(user =>
-        user.name.toLowerCase().includes(lowerQuery) ||
-        user.email.toLowerCase().includes(lowerQuery)
+        (user.name?.toLowerCase().includes(lowerQuery) || 
+         user.username?.toLowerCase().includes(lowerQuery) ||
+         user.email?.toLowerCase().includes(lowerQuery))
       );
     }
     this.cdr.detectChanges();
   }
 
   createDirectChat(userId: number): void {
+    if (this.creating) return;
+    
     this.creating = true;
     this.errorMessage = '';
 

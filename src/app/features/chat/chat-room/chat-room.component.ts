@@ -1,14 +1,15 @@
 // src/app/features/chat/chat-room/chat-room.component.ts
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { ChatRoom, Message, WebSocketMessage } from '../../../core/models/user.models';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Subscription, interval } from 'rxjs';
+
+import { ChatRoom, Message, User, WebSocketMessage } from '../../../core/models/user.models';
 import { ChatService } from '../../../core/services/chat';
 import { WebSocketService } from '../../../core/services/websocket';
 import { AuthService } from '../../../core/services/auth';
+import { PresenceService } from '../../../core/services/presence';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 @Component({
   selector: 'app-chat-room',
   templateUrl: './chat-room.component.html',
@@ -26,132 +27,166 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   roomId!: number;
   room: ChatRoom | null = null;
   messages: Message[] = [];
-  messageContent = '';
+  messageContent= '';
   loading = false;
   sending = false;
-  currentUserId: number | undefined;
+  currentUserId: number;
   
   private wsSubscription?: Subscription;
+  private statusCheckSubscription?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private chatService: ChatService,
     private wsService: WebSocketService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private presenceService: PresenceService,
+        private cdr: ChangeDetectorRef
+
   ) {
-    this.currentUserId = this.authService.currentUserValue?.ID;
+    this.currentUserId = this.authService.currentUserValue?.ID || 0;
   }
 
   ngOnInit(): void {
-    console.log("ChatRoomComponent INIT");
-
     this.route.params.subscribe(params => {
       this.roomId = +params['id'];
-      console.log("Room ID loaded:", this.roomId);
-
       this.loadRoom();
       this.loadMessages();
       this.connectWebSocket();
+      this.startStatusPolling();
     });
   }
 
   ngOnDestroy(): void {
-    console.log("ChatRoomComponent DESTROY → Closing WebSocket");
     this.wsService.disconnect();
-
     if (this.wsSubscription) {
-      console.log("Unsubscribing from WebSocket");
       this.wsSubscription.unsubscribe();
+    }
+    if (this.statusCheckSubscription) {
+      this.statusCheckSubscription.unsubscribe();
+    }
+  }
+
+  startStatusPolling(): void {
+    // Check online status every 15 seconds for chat room
+    this.statusCheckSubscription = interval(150000).subscribe(() => {
+      this.checkOnlineStatus();
+    });
+  }
+
+  checkOnlineStatus(): void {
+    if (!this.room || !this.isDirectChat()) return;
+
+    const otherUser = this.getOtherUser();
+    if (otherUser) {
+      this.presenceService.getOnlineStatus([otherUser.ID]).subscribe({
+        next: (response) => {
+          const isOnline = response.online_status[otherUser.ID];
+          this.presenceService.updateOnlineStatus(otherUser.ID, isOnline);
+          
+          // Update user in room
+          if (this.room) {
+            const userIndex = this.room.members.findIndex(m => m.ID === otherUser.ID);
+            if (userIndex !== -1) {
+              this.room.members[userIndex].is_online = isOnline;
+            }
+          }
+        },
+        error: (err) => console.error('Error checking status:', err)
+      });
     }
   }
 
   loadRoom(): void {
-    console.log("Fetching room details…");
     this.chatService.getRoomById(this.roomId).subscribe({
       next: (response) => {
-        console.log("Room loaded:", response.room);
         this.room = response.room;
+        this.checkOnlineStatus();
       },
       error: (error) => {
-        console.error('❌ Error loading room:', error);
+        console.error('Error loading room:', error);
       }
     });
   }
 
   loadMessages(): void {
-    console.log("Fetching existing messages…");
     this.loading = true;
-
     this.chatService.getRoomMessages(this.roomId, 50, 0).subscribe({
       next: (response) => {
-        console.log("Initial messages:", response.messages);
         this.messages = (response.messages || []).reverse();
-        console.log("Messages after reversed:", this.messages);
         this.loading = false;
-        this.cdr.detectChanges();
+                this.cdr.detectChanges();
+
         setTimeout(() => this.scrollToBottom(), 100);
       },
       error: (error) => {
-        console.error('❌ Error loading messages:', error);
+        console.error('Error loading messages:', error);
+                this.cdr.detectChanges();
+
         this.loading = false;
-        this.cdr.detectChanges();
       }
     });
   }
 
   connectWebSocket(): void {
-    console.log("Connecting WebSocket for room:", this.roomId);
-
     this.wsSubscription = this.wsService.connect(this.roomId).subscribe({
       next: (wsMessage: WebSocketMessage) => {
-        console.log("🔥 Real-time WS message received:", wsMessage);
-
-        // The backend sends the actual message inside `content`
-        if (wsMessage.type === 'message' && wsMessage.content) {
-          console.log("👍 Adding LIVE message to UI:", wsMessage.content);
+        if (wsMessage.type === 'message' && wsMessage.message) {
           this.messages.push(wsMessage.message as Message);
-          this.cdr.detectChanges();
           setTimeout(() => this.scrollToBottom(), 100);
-        } else {
-          console.warn("⚠ WS message is not a chat message or missing content:", wsMessage);
         }
       },
       error: (error) => {
-        console.error('❌ WebSocket stream error:', error);
-      },
-      complete: () => {
-        console.warn("⚠ WebSocket stream completed (this should NOT normally happen)");
+        console.error('WebSocket error:', error);
       }
     });
   }
 
-  sendMessage(): void {
-    if (!this.messageContent.trim() || this.sending) return;
-
-    console.log("Sending message:", this.messageContent);
-
-    this.sending = true;
-    const content = this.messageContent;
-    this.messageContent = '';
-
-    this.chatService.sendMessage(this.roomId, { content }).subscribe({
-      next: (response) => {
-        console.log("Message sent successfully:", response);
-        this.sending = false;
-
-        // Reload messages to confirm it's stored in DB
-        this.loadMessages();
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('❌ Error sending message:', error);
-        this.messageContent = content;
-        this.sending = false;
-        this.cdr.detectChanges();
-      }
-    });
+sendMessage(): void {
+  if (!this.messageContent.trim() || this.sending) {
+    return;
   }
+
+  const content = this.messageContent.trim();
+
+  // TEMPORARY MESSAGE FOR INSTANT UI UPDATE
+  const tempMessage: Message = {
+    ID: 0, // temporary
+    room_id: this.roomId,
+    sender_id: this.currentUserId,
+    content: content,
+      is_read: false,
+    CreatedAt: new Date().toISOString(),
+    UpdatedAt: new Date().toISOString()
+  };
+  
+  this.messages.push(tempMessage);
+  this.scrollToBottom();
+
+  this.messageContent = '';
+  this.sending = true;
+
+  this.chatService.sendMessage(this.roomId, { content }).subscribe({
+    next: () => {
+      // DO NOTHING — real message will arrive via WebSocket
+      this.sending = false;
+      this.cdr.detectChanges();
+    },
+    error: (error) => {
+      console.error('Error sending message:', error);
+
+      // restore message box
+      this.messageContent = content;
+
+      // remove temp message
+      this.messages = this.messages.filter(m => m !== tempMessage);
+
+      this.sending = false;
+      this.cdr.detectChanges();
+    }
+  });
+}
+
 
   onKeyPress(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -162,6 +197,33 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
   isOwnMessage(message: Message): boolean {
     return message.sender_id === this.currentUserId;
+  }
+
+  getRoomDisplayName(): string {
+    if (!this.room) return 'Loading...';
+    return this.chatService.getDirectChatName(this.room, this.currentUserId);
+  }
+
+  isDirectChat(): boolean {
+    return this.room ? this.chatService.isDirectChat(this.room) : false;
+  }
+
+  // NEW: Get other user in direct chat
+  getOtherUser(): User | undefined {
+    if (!this.room || !this.isDirectChat()) return undefined;
+    return this.room.members.find(m => m.ID !== this.currentUserId);
+  }
+
+  // NEW: Check if other user is online
+  isOtherUserOnline(): boolean {
+    const otherUser = this.getOtherUser();
+    return otherUser ? (otherUser.is_online || false) : false;
+  }
+
+  // NEW: Get last seen of other user
+  getOtherUserLastSeen(): string {
+    const otherUser = this.getOtherUser();
+    return otherUser ? this.presenceService.formatLastSeen(otherUser.last_seen_at) : 'Unknown';
   }
 
   formatMessageTime(dateString: string): string {
@@ -175,27 +237,32 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    return date.toLocaleDateString();
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString();
+    }
   }
 
   shouldShowDateSeparator(index: number): boolean {
     if (index === 0) return true;
+    
     const currentDate = new Date(this.messages[index].CreatedAt).toDateString();
     const previousDate = new Date(this.messages[index - 1].CreatedAt).toDateString();
+    
     return currentDate !== previousDate;
   }
 
   private scrollToBottom(): void {
     try {
       if (this.messagesContainer) {
-        this.messagesContainer.nativeElement.scrollTop =
+        this.messagesContainer.nativeElement.scrollTop = 
           this.messagesContainer.nativeElement.scrollHeight;
-        console.log("📜 Scrolled to bottom");
       }
     } catch (err) {
-      console.error('❌ Error scrolling to bottom:', err);
+      console.error('Error scrolling to bottom:', err);
     }
   }
 }

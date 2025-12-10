@@ -1,13 +1,11 @@
 <div class="chat-list-container">
   <div class="chat-list-header">
-    <h2>Messages</h2>
+    <h2>Your Chats</h2>
     <div class="header-actions">
-      <!-- NEW: Direct Chat Button -->
-      <button class="btn-icon" (click)="openUserListModal()" title="New Direct Chat">
-        <span class="icon">👤</span>
+      <button class="btn-create" (click)="openUserListModal()" title="Start Direct Chat">
+        <span class="icon">💬</span> New Chat
       </button>
-      <!-- Group Chat Button -->
-      <button class="btn-create" (click)="openCreateModal()">
+      <button class="btn-create" (click)="openCreateModal()" title="Create Group">
         <span class="icon">+</span> New Group
       </button>
     </div>
@@ -30,12 +28,12 @@
     <div class="empty-state">
       <div class="empty-icon">💬</div>
       <h3>No chats yet</h3>
-      <p>Start a conversation</p>
+      <p>Start a conversation with someone or create a group</p>
       <div class="empty-actions">
-        <button class="btn btn-secondary" (click)="openUserListModal()">
-          Direct Chat
+        <button class="btn btn-primary" (click)="openUserListModal()">
+          Start Direct Chat
         </button>
-        <button class="btn btn-primary" (click)="openCreateModal()">
+        <button class="btn btn-secondary" (click)="openCreateModal()">
           Create Group
         </button>
       </div>
@@ -46,32 +44,43 @@
     <div class="rooms-list">
       @for (room of rooms; track room.ID) {
         <div class="room-item" (click)="openRoom(room.ID)">
-          <div class="room-avatar">
-            <span>{{ getRoomAvatar(room) }}</span>
-            @if (!room.is_group) {
-              <div class="direct-badge">👤</div>
+          <div class="room-avatar-wrapper">
+            <div class="room-avatar" [class.direct-chat]="isDirectChat(room)">
+              <span>{{ getRoomAvatar(room) }}</span>
+            </div>
+            <!-- Online Status Indicator -->
+            @if (isDirectChat(room)) {
+              <div class="online-indicator" [class.online]="isOtherUserOnline(room)" 
+                   [class.offline]="!isOtherUserOnline(room)">
+              </div>
             }
           </div>
           <div class="room-info">
             <div class="room-header">
               <h3 class="room-name">
-                {{ getRoomDisplayName(room) }}
+                {{ getRoomName(room) }}
                 @if (room.is_group) {
                   <span class="group-badge">Group</span>
                 }
               </h3>
               <span class="room-time">{{ getLastMessageTime(room) }}</span>
             </div>
-            <p class="room-description">
-              @if (room.is_group) {
-                {{ room.description || 'No description' }}
-              } @else {
-                Direct message
-              }
-            </p>
-            @if (room.is_group) {
-              <span class="members-count">{{ room.members.length || 0 }} members</span>
-            }
+            <p class="room-description">{{ getLastMessagePreview(room) }}</p>
+            <div class="room-footer">
+              <span class="members-count">
+                @if (room.is_group) {
+                  {{ room.members.length || 0 }} members
+                } @else {
+                  @if (isOtherUserOnline(room)) {
+                    <span class="status-text online">● Online</span>
+                  } @else {
+                    <span class="status-text offline">
+                      Last seen {{ getUserLastSeen(getOtherUser(room)!) }}
+                    </span>
+                  }
+                }
+              </span>
+            </div>
           </div>
         </div>
       }
@@ -79,7 +88,7 @@
   }
 </div>
 
-<!-- Group Chat Modal -->
+<!-- Create Room Modal -->
 @if (showCreateModal) {
   <div class="modal-overlay" (click)="closeCreateModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -91,13 +100,63 @@
   </div>
 }
 
-<!-- Direct Chat Modal -->
+<!-- User List Modal for Direct Chat -->
 @if (showUserListModal) {
   <div class="modal-overlay" (click)="closeUserListModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
-      <app-user-list
-        (cancelled)="closeUserListModal()"
-      ></app-user-list>
+      <div class="user-list-container">
+        <div class="user-list-header">
+          <h2>Start a Conversation</h2>
+          <button class="btn-close" (click)="closeUserListModal()">&times;</button>
+        </div>
+
+        @if (loadingUsers) {
+          <div class="loading-users">
+            <div class="spinner"></div>
+            <p>Loading users...</p>
+          </div>
+        }
+
+        @if (!loadingUsers && users.length === 0) {
+          <div class="empty-users">
+            <p>No users available</p>
+          </div>
+        }
+
+        @if (!loadingUsers && users.length > 0) {
+          <div class="users-list">
+            @for (user of users; track user.ID) {
+              <div class="user-item" (click)="startDirectChat(user.ID)">
+                <div class="user-avatar-wrapper">
+                  <div class="user-avatar">
+                    <span>{{ (user.name || user.username || '?').charAt(0).toUpperCase() }}</span>
+                  </div>
+                  <!-- Online Status Indicator -->
+                  <div class="online-indicator" 
+                       [class.online]="user.is_online" 
+                       [class.offline]="!user.is_online">
+                  </div>
+                </div>
+                <div class="user-info">
+                  <h4>
+                    {{ user.name || user.username }}
+                    @if (user.is_online) {
+                      <span class="status-badge online">Online</span>
+                    }
+                  </h4>
+                  <p>
+                    @if (user.is_online) {
+                      {{ user.email }}
+                    } @else {
+                      Last seen {{ getUserLastSeen(user) }}
+                    }
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   </div>
 }

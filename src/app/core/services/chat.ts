@@ -79,4 +79,17 @@ export class ChatService {
   searchUsers(query: string): Observable<{ users: User[] }> {
     return this.getAllUsers(query);
   }
+  // Check if a room is a direct chat (2 members, type === 'direct')
+isDirectChat(room: ChatRoom): boolean {
+  return room.is_group === false || (room.members && room.members.length === 2);
+}
+
+// Get name of the other user in a direct chat
+getDirectChatName(room: ChatRoom, currentUserId: number): string {
+  if (!room || !room.members) return 'Unknown';
+
+  const otherUser = room.members.find(m => m.ID !== currentUserId);
+  return otherUser?.name ? otherUser?.name : 'Direct Chat';
+}
+
 }

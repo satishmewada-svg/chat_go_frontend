@@ -7,8 +7,10 @@ import { environment } from '../../../environments/environments';
 
 export interface User {
   ID?: number;
-  username: string;
+  name?: string;
   email: string;
+  is_online?: boolean;
+  last_seen_at?: string;
   CreatedAt?: string;
   UpdatedAt?: string;
 }
@@ -35,7 +37,6 @@ export class AuthService {
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     
-    // Only access localStorage in browser
     let storedUser = null;
     if (this.isBrowser) {
       const userStr = localStorage.getItem('currentUser');
@@ -51,9 +52,7 @@ export class AuthService {
   }
 
   public get token(): string | null {
-    if (!this.isBrowser) {
-      return null;
-    }
+    if (!this.isBrowser) return null;
     return localStorage.getItem('token');
   }
 
@@ -61,13 +60,6 @@ export class AuthService {
     if (this.isBrowser) {
       localStorage.setItem(key, value);
     }
-  }
-
-  private getItem(key: string): string | null {
-    if (!this.isBrowser) {
-      return null;
-    }
-    return localStorage.getItem(key);
   }
 
   private removeItem(key: string): void {
@@ -84,10 +76,7 @@ export class AuthService {
             this.setItem('token', response.token);
             this.setItem('currentUser', JSON.stringify(response.user));
             this.currentUserSubject.next(response.user);
-            
-            if (this.isBrowser) {
-              console.log('✅ Token saved');
-            }
+            console.log('✅ Login successful');
           }
         })
       );
